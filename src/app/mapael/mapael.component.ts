@@ -38,16 +38,32 @@ export class MapaelComponent implements OnInit {
 
     const plotMap = this.countryData.map(country => {
       const size = country.Value / 1000;
-      return {[country.Name + '_plot']: { text: country.Value, latitude: country.Lat, longitude: country.Long, value: country.Value, size}} 
+      return {[country.Name]: { text: country.Value, latitude: country.Lat, longitude: country.Long, value: country.Value, size}} 
     });
     const plots = Object.assign({}, ...plotMap);
+
+    //Setup links between US and everyone
+    const usData = this.countryData.find(country => country.Name === 'US');
+    const linksData = this.countryData.filter(country => country.Name !== 'US').map(country => { return {
+        ['US_' + country.Name]: {
+          factor:-0.3,
+          between: ['US', country.Name],
+          attr: {
+            'stroke-width': 2,
+          },
+          //text: {content:'US to ' + country.Name + ': ' + ((usData?.Value ?? 0)- country.Value)}
+        }
+      }
+    });
+    const links = Object.assign({}, ...linksData);
 
     (<any>$('.map-container')).mapael({
       map: {
         name: 'world_countries',
       },
       areas: areas,
-      plots: plots
+      plots: plots,
+      links
     });
     this.mapaelInited = true;
   }
@@ -68,9 +84,15 @@ export class MapaelComponent implements OnInit {
         }
       });
       const areas = Object.assign({}, ...areaMap);
+      const plotMap = this.countryData.map(country => {
+        const size = country.Value / 1000;
+        return {[country.Name]: { text: country.Value, latitude: country.Lat, longitude: country.Long, value: country.Value, size}} 
+      });
+      const plots = Object.assign({}, ...plotMap);
       (<any>$('.map-container')).trigger('update', [{
         mapOptions: {
-          areas: areas
+          areas,
+          plots
         }
       }]);
     } 
